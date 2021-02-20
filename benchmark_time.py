@@ -34,7 +34,7 @@ class InferenceDataset(Dataset):
 
 img_loader = DataLoader(dataset = InferenceDataset(BATCH_SIZE * (WARM_UP + NUM_TEST)), 
                     batch_size = BATCH_SIZE, 
-                    num_workers = 8)
+                    num_workers = 2)
 
 """
 this function is used for benchmarking the inference time of model in cpu (or different hardware)
@@ -84,9 +84,9 @@ def inference_gpu():
     return benchmark
 
 if __name__ == "__main__":
-    inference_benchmark_cpu = pandas.DataFrame(inference_cpu())
-    inference_benchmark_cpu.to_csv("results/model_inference_benchmark_cpu", index = False)
+    #inference_benchmark_cpu = pandas.DataFrame(inference_cpu())
+    #inference_benchmark_cpu.to_csv("results/model_inference_benchmark_cpu", index = False)
 
-    #inference_benchmark_gpu = pandas.DataFrame(inference_gpu())
-    #inference_benchmark_gpu.to_csv("results/model_inference_benchmark_gpu", index = False)
+    inference_benchmark_gpu = pandas.DataFrame(inference_gpu())
+    inference_benchmark_gpu.to_csv("results/model_inference_benchmark_gpu", index = False)
 
