@@ -32,7 +32,7 @@ class DLHBenchmark():
         self.infer_epoch = infer_epoch
         self.batch_size_list = batch_size_list
         self.model_list = model_list
-        self.hardward_list = hardware_List
+        self.hardware_list = hardware_List
 
         max_batch_size = max(self.batch_size_list)
         data_num = max_batch_size * (self.warm_up + self.infer_epoch)
@@ -40,7 +40,6 @@ class DLHBenchmark():
 
     def inference_cpu(self, model_name, batch_size):
         durations = []
-        time_sum = 0
         ops = 0
 
         model = pm.__dict__[model_name]()
@@ -53,6 +52,7 @@ class DLHBenchmark():
                                 num_workers = 4)
 
         loop_num = self.warm_up + self.infer_epoch
+        time_sum = 0
         model.eval()
         
         for step, img in enumerate(img_dataloader):
@@ -101,12 +101,21 @@ class DLHBenchmark():
                     benchmark_durations[model_name] = durations
                     ops_record[model_name] = ops
 
-                file_name = "results/" + str(batch_size) + "_" + hardware_type
+                file_name = "results/ops/" + str(batch_size) + "_" + hardware_type
                 benchmark_durations_new = pandas.DataFrame(benchmark_durations)
                 benchmark_durations_new.to_csv(file_name, index = False)
                 benchmark_ops[hardware_type] = ops_record
 
-            file_name = "results/final_ops_" + str(batch_size)
-            benchmark_ops_new = pandas.DataFrame(file_name, index = False)
+            file_name = "results/ops/final_ops_" + str(batch_size)
+            benchmark_ops_new = pandas.DataFrame(file_name)
+            benchmark_ops_new.to_csv(file_name, index = False)
 
+if __name__ == "__main__":
+    warm_up = 10
+    infer_epoch = 20
+    batch_size_list = [1, 8, 32]
+    model_list = ["senet154"]
+    hardware_list = ["CPU"]
+    dlh_bench = DLHBenchmark()
+    dlh_bench.bench_opsj()
     
