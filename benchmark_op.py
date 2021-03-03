@@ -8,11 +8,17 @@ Hardware:CPU...
 import torch
 from torch.autograd import Variable
 import torch.nn as nn
-from torch.utils import Dataset, DataLoader
+from torch.utils.data import Dataset, DataLoader
 import time
 import pandas
 import pretrained_models as pm
 from thop import profile
+from ptflops import get_model_complexity_info
+
+def transStr2Float(input_str):
+    for c in range(len(input_str)):
+        if input_str[c] == 'G':
+            return float(input_str[:c])
 
 class InferenceDataset(Dataset):
     def __init__(self, num):
@@ -41,16 +47,16 @@ class DLHBenchmark():
     def inference_cpu(self, model_name, batch_size):
         durations = []
         ops = 0
-
         model = pm.__dict__[model_name]()
-        img_test = torch.rand(1, 3, 224, 224)
-        macs, params = profile(model, inputs=(img_test))
-        op_num = macs * 2
+
+        macs, params = get_model_complexity_info(model, (3,224,224), as_strings=True, 
+                                        print_per_layer_stat=False, verbose=True)                                                
+        float_macs = transStr2Float(macs)
+        op_num = float_macs * pow(10, 9) * 2
 
         img_dataloader = DataLoader(dataset = self.dataset,
                                 batch_size = batch_size,
                                 num_workers = 4)
-
         loop_num = self.warm_up + self.infer_epoch
         time_sum = 0
         model.eval()
@@ -64,10 +70,10 @@ class DLHBenchmark():
             if step >= self.warm_up:
                 now_durations = (end_time - start_time) * 1000
                 durations.append(now_durations)
-                time_sum += now_durations
+                time_sum += now_durations / 1000
         
         total_img_num = self.infer_epoch * batch_size
-        ops = op_num * total_img_num / time_sum
+        ops = (op_num * total_img_num / time_sum) * pow(10,-9)
 
         return durations, ops
 
@@ -107,15 +113,16 @@ class DLHBenchmark():
                 benchmark_ops[hardware_type] = ops_record
 
             file_name = "results/ops/final_ops_" + str(batch_size)
-            benchmark_ops_new = pandas.DataFrame(file_name)
-            benchmark_ops_new.to_csv(file_name, index = False)
+            benchmark_ops_new = pandas.DataFrame(benchmark_ops)
+            benchmark_ops_new.to_csv(file_name, index = True)
 
 if __name__ == "__main__":
-    warm_up = 10
-    infer_epoch = 20
-    batch_size_list = [1, 8, 32]
+    warm_up = 5
+    infer_epoch = 5
+    batch_size_list = [1, 2, 4]
     model_list = ["senet154"]
     hardware_list = ["CPU"]
-    dlh_bench = DLHBenchmark()
+    dlh_bench = DLHBenchmark(warm_up, infer_epoch, batch_size_list,
+                            model_list, hardware_list)
     dlh_bench.bench_opsj()
     
