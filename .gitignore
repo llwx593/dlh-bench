@@ -1,4 +1,6 @@
 /.vscode/
+/__pycache__/
 /pretrained_models/__pycache__/
 /pretrained_models/datasets/__pycache__/
 /pretrained_models/models/__pycache__/
+benchmark_design.md
