@@ -54,6 +54,10 @@ class DLHBenchmark():
         float_macs = transStr2Float(macs)
         op_num = float_macs * pow(10, 9) * 2
 
+        # 先使用paper给的值
+        if model_name == "efficientnet_b3":
+            op_num = 1.8 * pow(10, 9)
+
         img_dataloader = DataLoader(dataset = self.dataset,
                                 batch_size = batch_size,
                                 num_workers = 4)
@@ -119,17 +123,17 @@ class DLHBenchmark():
 
             file_name = "results/final/final_ops_" + str(batch_size)
             benchmark_ops_new = pandas.DataFrame(benchmark_ops)
-            benchmark_ops_new.to_csv(file_name, index = False)
+            benchmark_ops_new.to_csv(file_name, index = True)
 
             file_name = "results/final/final_opj_" + str(batch_size)
             benchmark_opj_new = pandas.DataFrame(benchmark_opj)
-            benchmark_opj_new.to_csv(file_name, index = False)
+            benchmark_opj_new.to_csv(file_name, index = True)
 
 if __name__ == "__main__":
     warm_up = 5
     infer_epoch = 5
     batch_size_list = [1, 2, 4]
-    model_list = ["senet154"]
+    model_list = ["senet154", "efficientnet_b3"]
     hardware_info = {"CPU":15}
     dlh_bench = DLHBenchmark(warm_up, infer_epoch, batch_size_list,
                             model_list, hardware_info)

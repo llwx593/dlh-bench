@@ -2,7 +2,6 @@
 models:
 1. SENet154
 2. se_resnext50_32x4d
-3. Efficientnet-b3
 """
 from __future__ import print_function, division, absolute_import
 from collections import OrderedDict
