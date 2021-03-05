@@ -12,7 +12,6 @@ from torch.utils.data import Dataset, DataLoader
 import time
 import pandas
 import pretrained_models as pm
-from thop import profile
 from ptflops import get_model_complexity_info
 
 def transStr2Float(input_str):
@@ -33,12 +32,12 @@ class InferenceDataset(Dataset):
 
 class DLHBenchmark():
     """can benchmark GOPS and GOPJ on different hardware by running different model"""
-    def __init__(self, warm_up, infer_epoch, batch_size_list, model_list, hardware_List):
+    def __init__(self, warm_up, infer_epoch, batch_size_list, model_list, hardware_info):
         self.warm_up = warm_up
         self.infer_epoch = infer_epoch
         self.batch_size_list = batch_size_list
         self.model_list = model_list
-        self.hardware_list = hardware_List
+        self.hardware_info = hardware_info
 
         max_batch_size = max(self.batch_size_list)
         data_num = max_batch_size * (self.warm_up + self.infer_epoch)
@@ -47,8 +46,9 @@ class DLHBenchmark():
     def inference_cpu(self, model_name, batch_size):
         durations = []
         ops = 0
-        model = pm.__dict__[model_name]()
+        opj = 0
 
+        model = pm.__dict__[model_name]()
         macs, params = get_model_complexity_info(model, (3,224,224), as_strings=True, 
                                         print_per_layer_stat=False, verbose=True)                                                
         float_macs = transStr2Float(macs)
@@ -74,8 +74,9 @@ class DLHBenchmark():
         
         total_img_num = self.infer_epoch * batch_size
         ops = (op_num * total_img_num / time_sum) * pow(10,-9)
+        opj = ops / self.hardware_info["CPU"]
 
-        return durations, ops
+        return durations, ops, opj
 
     def inference_gpu(self):
         return []
@@ -97,32 +98,40 @@ class DLHBenchmark():
 
         for batch_size in self.batch_size_list:
             benchmark_ops = {}
+            benchmark_opj = {}
 
-            for hardware_type in self.hardware_list:
+            for hardware_type in self.hardware_info.keys():
                 benchmark_durations = {}
                 ops_record = {}
+                opj_record = {}
 
                 for model_name in self.model_list:
-                    durations, ops= func_map[hardware_type](model_name, batch_size)
+                    durations, ops, opj= func_map[hardware_type](model_name, batch_size)
                     benchmark_durations[model_name] = durations
                     ops_record[model_name] = ops
+                    opj_record[model_name] = opj
 
-                file_name = "results/ops/" + str(batch_size) + "_" + hardware_type
+                file_name = "results/final/" + str(batch_size) + "_" + hardware_type
                 benchmark_durations_new = pandas.DataFrame(benchmark_durations)
                 benchmark_durations_new.to_csv(file_name, index = False)
                 benchmark_ops[hardware_type] = ops_record
+                benchmark_opj[hardware_type] = opj_record
 
-            file_name = "results/ops/final_ops_" + str(batch_size)
+            file_name = "results/final/final_ops_" + str(batch_size)
             benchmark_ops_new = pandas.DataFrame(benchmark_ops)
-            benchmark_ops_new.to_csv(file_name, index = True)
+            benchmark_ops_new.to_csv(file_name, index = False)
+
+            file_name = "results/final/final_opj_" + str(batch_size)
+            benchmark_opj_new = pandas.DataFrame(benchmark_opj)
+            benchmark_opj_new.to_csv(file_name, index = False)
 
 if __name__ == "__main__":
     warm_up = 5
     infer_epoch = 5
     batch_size_list = [1, 2, 4]
     model_list = ["senet154"]
-    hardware_list = ["CPU"]
+    hardware_info = {"CPU":15}
     dlh_bench = DLHBenchmark(warm_up, infer_epoch, batch_size_list,
-                            model_list, hardware_list)
+                            model_list, hardware_info)
     dlh_bench.bench_opsj()
     
