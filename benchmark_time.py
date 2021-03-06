@@ -1,5 +1,5 @@
 """
-benchmark the time of inference
+benchmark_time.py - benchmark the time of inference
 """
 import torch
 from torch.autograd import Variable

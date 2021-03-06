@@ -1,5 +1,5 @@
 """
-benchmark how the batch size influence the time of inference
+benchmark_bs.py - benchmark how the batch size influence the time of inference
 """
 from benchmark_time import BATCH_SIZE
 import torch

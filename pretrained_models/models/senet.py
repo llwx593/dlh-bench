@@ -1,7 +1,5 @@
 """
-models:
-1. SENet154
-2. se_resnext50_32x4d
+senet.py - Model and module class for Senet154 and se_resnext50_32x4d
 """
 from __future__ import print_function, division, absolute_import
 from collections import OrderedDict

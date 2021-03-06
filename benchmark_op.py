@@ -1,4 +1,5 @@
 """
+benchmark_op.py - Benchmark the different hardware's performance and power consumption in deep learning inference
 Goal:Benchmark the different hardware's performance and power consumption in deep learning inference
 Model:Senet154
 Metric:GOP/S, GOP/J(the batch size is 1, 8, 32)
