@@ -106,14 +106,14 @@ class DLHBenchmark():
 
             for hardware_type in self.hardware_info.keys():
                 benchmark_durations = {}
-                ops_record = {}
-                opj_record = {}
+                ops_record = []
+                opj_record = []
 
                 for model_name in self.model_list:
                     durations, ops, opj= func_map[hardware_type](model_name, batch_size)
                     benchmark_durations[model_name] = durations
-                    ops_record[model_name] = ops
-                    opj_record[model_name] = opj
+                    ops_record.append(ops)
+                    opj_record.append(opj)
 
                 file_name = "results/final/" + str(batch_size) + "_" + hardware_type
                 benchmark_durations_new = pandas.DataFrame(benchmark_durations)
@@ -122,11 +122,21 @@ class DLHBenchmark():
                 benchmark_opj[hardware_type] = opj_record
 
             file_name = "results/final/final_ops_" + str(batch_size)
-            benchmark_ops_new = pandas.DataFrame(benchmark_ops)
+            benchmark_ops_new = pandas.DataFrame(benchmark_ops, index = self.model_list)
+            fig1_title = "GOP/S compare  " + "batch_size = " + str(batch_size)
+            ops_pt = benchmark_ops_new.plot(kind="bar", title=fig1_title, rot=0)
+            ops_fig = ops_pt.get_figure()
+            fig1_name = "results/final/fig_ops_" + str(batch_size) + ".jpg"
+            ops_fig.savefig(fig1_name)
             benchmark_ops_new.to_csv(file_name, index = True)
 
             file_name = "results/final/final_opj_" + str(batch_size)
-            benchmark_opj_new = pandas.DataFrame(benchmark_opj)
+            benchmark_opj_new = pandas.DataFrame(benchmark_opj, index = self.model_list)
+            fig2_title = "GOP/J compare  " + "batch_size = " + str(batch_size)
+            opj_pt = benchmark_opj_new.plot(kind="bar", title=fig2_title, rot=0)
+            opj_fig = opj_pt.get_figure()
+            fig2_name = "results/final/fig_opj_" + str(batch_size) + ".jpg"
+            opj_fig.savefig(fig2_name)
             benchmark_opj_new.to_csv(file_name, index = True)
 
 if __name__ == "__main__":
