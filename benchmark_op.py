@@ -83,13 +83,13 @@ class DLHBenchmark():
         return durations, ops, opj
 
     def inference_gpu(self):
-        return []
+        return [], 0, 0
 
     def inference_tpu(self):
-        return []
+        return [], 0, 0
 
     def inference_ascend(self):
-        return []
+        return [], 0, 0
 
     def make_hardware_func(self):
         func_map = {'CPU':self.inference_cpu, 'GPU':self.inference_gpu, 'TPU':self.inference_tpu,
@@ -143,7 +143,7 @@ if __name__ == "__main__":
     warm_up = 5
     infer_epoch = 5
     batch_size_list = [1, 2, 4]
-    model_list = ["senet154", "efficientnet_b3"]
+    model_list = ["senet154", "se_resnext50_32x4d", "efficientnet_b3"]
     hardware_info = {"CPU":15}
     dlh_bench = DLHBenchmark(warm_up, infer_epoch, batch_size_list,
                             model_list, hardware_info)
