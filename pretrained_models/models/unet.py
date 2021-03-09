@@ -1,10 +1,14 @@
 """
-unet.py - Model and module class for unet and unet++ model
+unet.py - Model and module class for unet model
 """
 
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from torch.utils import model_zoo
+
+PretrainedURL = ""
+__all__ = ["unet"]
 
 class DoubleConv(nn.Module):
     def __init__(self, ch_in, ch_out, bilinear = False):
@@ -69,9 +73,9 @@ class OutConv(nn.Module):
         return x
 
 
-class Unet(nn.Module):
+class Unet_Net(nn.Module):
     def __init__(self, ch_in, num_classes, up_mode = "bilinear"):
-        super(Unet, self).__init__()
+        super(Unet_Net, self).__init__()
         self.in_layer = DoubleConv(ch_in, 64)
         self.down1 = DownSample(64, 128)
         self.down2 = DownSample(128, 256)
@@ -98,6 +102,19 @@ class Unet(nn.Module):
 
         return out_map
 
+def load_pretrained_model(model, weight_path):
+    if weight_path != None:
+        _ = model.load_state_dict(weight_path)
+        return
+    state_dict = model_zoo.load_url(PretrainedURL)
+    _ = model.load_state_dict(state_dict)
+
+def unet(channel_input, num_classes, pretrained = True, weight_path = None):
+    model = Unet_Net(channel_input, num_classes)
+    if pretrained:
+        load_pretrained_model(model, weight_path)
+    return model
+
 if __name__ == "__main__":
-    model1 = Unet(3, 2)
+    model1 = Unet_Net(3, 2)
     model1.eval()

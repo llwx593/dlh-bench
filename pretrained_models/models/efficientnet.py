@@ -415,8 +415,8 @@ class EfficientNet(nn.Module):
             out_channels = round_filters(32, self._global_params)
             self._conv_stem = Conv2d(in_channels, out_channels, kernel_size=3, stride=2, bias=False)
 
-__all__ = ['efficientnet_b3']
+__all__ = ["efficientnet_b3"]
 
 def efficientnet_b3():
-    model = EfficientNet.from_pretrained('efficientnet-b3')
+    model = EfficientNet.from_pretrained("efficientnet-b3")
     return model
