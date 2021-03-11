@@ -1,120 +1,139 @@
 """
 unet.py - Model and module class for unet model
 """
-
+from os.path import samefile
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.utils import model_zoo
+import time
 
-PretrainedURL = ""
+PretrainedURL = r"C:\Users\10125\.cache\torch\hub\checkpoints\unet_carvana_scale1_epoch5.pth"
 __all__ = ["unet"]
 
 class DoubleConv(nn.Module):
-    def __init__(self, ch_in, ch_out, bilinear = False):
+    """(convolution => [BN] => ReLU) * 2"""
+
+    def __init__(self, in_channels, out_channels, mid_channels=None):
         super().__init__()
-        ch_mid = ch_out * 2 if bilinear else ch_out
+        if not mid_channels:
+            mid_channels = out_channels
         self.double_conv = nn.Sequential(
-            nn.Conv2d(ch_in, ch_mid, 3),
-            nn.BatchNorm2d(ch_mid),
+            nn.Conv2d(in_channels, mid_channels, kernel_size=3, padding=1),
+            nn.BatchNorm2d(mid_channels),
             nn.ReLU(inplace=True),
-            nn.Conv2d(ch_mid, ch_out, 3),
-            nn.BatchNorm2d(ch_out),
+            nn.Conv2d(mid_channels, out_channels, kernel_size=3, padding=1),
+            nn.BatchNorm2d(out_channels),
             nn.ReLU(inplace=True)
         )
 
     def forward(self, x):
-        x = self.double_conv(x)
-        return x
+        return self.double_conv(x)
 
-class DownSample(nn.Module):
-    def __init__(self, ch_in, ch_out, biliner = False):
+
+class Down(nn.Module):
+    """Downscaling with maxpool then double conv"""
+
+    def __init__(self, in_channels, out_channels):
         super().__init__()
-        self.max_pool_conv = nn.Sequential(
+        self.maxpool_conv = nn.Sequential(
             nn.MaxPool2d(2),
-            DoubleConv(ch_in, ch_out, biliner)
+            DoubleConv(in_channels, out_channels)
         )
 
     def forward(self, x):
-        x = self.max_pool_conv(x)
-        return x
+        return self.maxpool_conv(x)
 
-class UpSample(nn.Module):
-    def __init__(self, ch_in, ch_out, bilinear = True):
+
+class Up(nn.Module):
+    """Upscaling then double conv"""
+
+    def __init__(self, in_channels, out_channels, bilinear=True):
         super().__init__()
+
+        # if bilinear, use the normal convolutions to reduce the number of channels
         if bilinear:
-            self.up_conv = nn.Upsample(scale_factor = 2, mode = 'bilinear', align_corners = True)
-            self.conv = DoubleConv(ch_in, ch_out // 2, bilinear = True)
+            self.up = nn.Upsample(scale_factor=2, mode='bilinear', align_corners=True)
+            self.conv = DoubleConv(in_channels, out_channels, in_channels // 2)
         else:
-            self.up_conv = nn.ConvTranspose2d(ch_in, ch_in // 2, kernel_size = 2, stride = 2)
-            self.conv = DoubleConv(ch_in, ch_out)
-    
+            self.up = nn.ConvTranspose2d(in_channels , in_channels // 2, kernel_size=2, stride=2)
+            self.conv = DoubleConv(in_channels, out_channels)
+
+
     def forward(self, x1, x2):
-        x1 = self.up_conv(x1)
+        x1 = self.up(x1)
+        # input is CHW
+        diffY = x2.size()[2] - x1.size()[2]
+        diffX = x2.size()[3] - x1.size()[3]
 
-        deltax = x2.size()[3] - x1.size()[3]
-        deltay = x2.size()[2] - x1.size()[2]
+        x1 = F.pad(x1, [diffX // 2, diffX - diffX // 2,
+                        diffY // 2, diffY - diffY // 2])
+        # if you have padding issues, see
+        # https://github.com/HaiyongJiang/U-Net-Pytorch-Unstructured-Buggy/commit/0e854509c2cea854e247a9c615f175f76fbb2e3a
+        # https://github.com/xiaopeng-liao/Pytorch-UNet/commit/8ebac70e633bac59fc22bb5195e513d5832fb3bd
+        x = torch.cat([x2, x1], dim=1)
+        return self.conv(x)
 
-        x1 = F.pad(x1, [deltax // 2, deltax - deltax // 2,
-                        deltay // 2, deltay - deltay // 2])
-        
-        x = torch.cat([x2, x1], dim = 1)
-        x = self.conv(x)
-
-        return x
 
 class OutConv(nn.Module):
-    def __init__(self, ch_in, num_classes):
-        super().__init__()
-        self.out_conv = nn.Conv2d(ch_in, num_classes, kernel_size = 1, stride = 1)
-    
-    def forward(self, x):
-        x = self.out_conv(x)
-        return x
-
-
-class Unet_Net(nn.Module):
-    def __init__(self, ch_in, num_classes, up_mode = "bilinear"):
-        super(Unet_Net, self).__init__()
-        self.in_layer = DoubleConv(ch_in, 64)
-        self.down1 = DownSample(64, 128)
-        self.down2 = DownSample(128, 256)
-        self.down3 = DownSample(256, 512)
-        factor = 2 if up_mode == "bilinear" else 1
-        self.down4 = DownSample(512, 1024 // factor, biliner = True)
-        self.up1 = UpSample(1024, 512)
-        self.up2 = UpSample(512, 256)
-        self.up3 = UpSample(256, 128)
-        self.up4 = UpSample(128, 64)
-        self.out_layer = OutConv(64, num_classes)
+    def __init__(self, in_channels, out_channels):
+        super(OutConv, self).__init__()
+        self.conv = nn.Conv2d(in_channels, out_channels, kernel_size=1)
 
     def forward(self, x):
-        x0 = self.in_layer(x)
-        x1 = self.down1(x0)
-        x2 = self.down2(x1)
-        x3 = self.down3(x2)
-        x4 = self.down4(x3)
-        x5 = self.up1(x4, x3)
-        x6 = self.up2(x5, x2)
-        x7 = self.up3(x6, x1)
-        x8 = self.up4(x7, x0)
-        out_map = self.out_layer(x8)
+        return self.conv(x)
 
-        return out_map
+
+class UNet(nn.Module):
+    def __init__(self, n_channels, n_classes, bilinear=True):
+        super(UNet, self).__init__()
+        self.n_channels = n_channels
+        self.n_classes = n_classes
+        self.bilinear = bilinear
+
+        self.inc = DoubleConv(n_channels, 64)
+        self.down1 = Down(64, 128)
+        self.down2 = Down(128, 256)
+        self.down3 = Down(256, 512)
+        factor = 2 if bilinear else 1
+        self.down4 = Down(512, 1024 // factor)
+        self.up1 = Up(1024, 512 // factor, bilinear)
+        self.up2 = Up(512, 256 // factor, bilinear)
+        self.up3 = Up(256, 128 // factor, bilinear)
+        self.up4 = Up(128, 64, bilinear)
+        self.outc = OutConv(64, n_classes)
+
+    def forward(self, x):
+        x1 = self.inc(x)
+        x2 = self.down1(x1)
+        x3 = self.down2(x2)
+        x4 = self.down3(x3)
+        x5 = self.down4(x4)
+        x = self.up1(x5, x4)
+        x = self.up2(x, x3)
+        x = self.up3(x, x2)
+        x = self.up4(x, x1)
+        logits = self.outc(x)
+        return logits
 
 def load_pretrained_model(model, weight_path):
     if weight_path != None:
         _ = model.load_state_dict(weight_path)
         return
-    state_dict = model_zoo.load_url(PretrainedURL)
+    state_dict = model_zoo.load_url(PretrainedURL, map_location=torch.device("cpu"))
     _ = model.load_state_dict(state_dict)
 
-def unet(channel_input, num_classes, pretrained = True, weight_path = None):
-    model = Unet_Net(channel_input, num_classes)
+def unet(channel_input = 3, num_classes = 1, pretrained = True, weight_path = None):
+    model = UNet(channel_input, num_classes)
     if pretrained:
         load_pretrained_model(model, weight_path)
     return model
 
 if __name__ == "__main__":
-    model1 = Unet_Net(3, 2)
-    model1.eval()
+    model1 = unet()
+    image1 = torch.randn(1, 3, 224, 224)
+    start_time = time.time()
+    out = model1(image1)
+    end_time = time.time()
+    duration = (end_time - start_time) * 1000
+    print("the inference duration is ", duration)

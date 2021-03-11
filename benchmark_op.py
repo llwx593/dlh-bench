@@ -144,7 +144,7 @@ if __name__ == "__main__":
     warm_up = 5
     infer_epoch = 5
     batch_size_list = [1, 2, 4]
-    model_list = ["senet154", "se_resnext50_32x4d", "efficientnet_b3"]
+    model_list = ["senet154", "se_resnext50_32x4d", "efficientnet_b3", "unet", "unetpp"]
     hardware_info = {"CPU":15}
     dlh_bench = DLHBenchmark(warm_up, infer_epoch, batch_size_list,
                             model_list, hardware_info)

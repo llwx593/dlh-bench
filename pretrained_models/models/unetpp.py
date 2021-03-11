@@ -5,6 +5,9 @@ unet++.py - Model and module class for unet++ model
 import torch
 from torch import nn
 from torch.utils import model_zoo
+import time
+from thop import profile
+from ptflops import get_model_complexity_info
 
 PretrainedURL = ""
 __all__ = ['unet++']
@@ -104,15 +107,28 @@ def load_pretrained_model(model, weight_path):
     if weight_path != None:
         _ = model.load_state_dict(weight_path)
         return
-    state_dict = model_zoo.load_url(PretrainedURL)
+    state_dict = model_zoo.load_url(PretrainedURL, map_location=torch.device("cpu"))
     _ = model.load_state_dict(state_dict)
 
-def unetpp(channel_input, num_classes, pretrained = True, weight_path = None):
-    model = NestedUNet(channel_input, num_classes)
+def unetpp(num_classes = 1, channel_input = 3, pretrained = False, weight_path = None):
+    model = NestedUNet(num_classes, channel_input)
     if pretrained:
         load_pretrained_model(model, weight_path)
     return model
 
 if __name__ == "__main__":
-    model1 = NestedUNet(3, 2)
-    model1.eval()
+    model1 = NestedUNet(1, 3)
+    image1 = torch.randn(1, 3, 224, 224)
+    start_time = time.time()
+    out = model1(image1)
+    end_time = time.time()
+    duration = (end_time - start_time) * 1000
+    print("the inference duration is ", duration)
+
+    input_data = torch.randn(1, 3, 224, 224)
+    macs, params = profile(model1, inputs=(input_data, ))
+    print("the macs is ", macs)
+
+    macs, params = get_model_complexity_info(model1, (3,224,224), as_strings=True, 
+                    print_per_layer_stat=False, verbose=True) 
+    print("the another macs is ", macs)
