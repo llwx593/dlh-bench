@@ -15,6 +15,8 @@ import pandas
 import pretrained_models as pm
 from ptflops import get_model_complexity_info
 
+torch.backends.cudnn.benchmark = True
+
 def transStr2Float(input_str):
     for c in range(len(input_str)):
         if input_str[c] == 'G':
@@ -83,8 +85,52 @@ class DLHBenchmark():
 
         return durations, ops, opj
 
-    def inference_gpu(self):
-        return [], 0, 0
+    def inference_gpu(self, model_name, batch_size):
+        if not torch.cuda.is_available():
+            print("error!!! you don't have cuda")
+            return [], 0, 0
+            
+        durations = []
+        ops = 0
+        opj = 0
+
+        model = pm.__dict__[model_name]()
+        model = model.to("cuda")
+        macs, params = get_model_complexity_info(model, (3,224,224), as_strings=True, 
+                                        print_per_layer_stat=False, verbose=True)                                                
+        float_macs = transStr2Float(macs)
+        op_num = float_macs * pow(10, 9) * 2
+
+        # 先使用paper给的值
+        if model_name == "efficientnet_b3":
+            op_num = 1.8 * pow(10, 9)
+
+        img_dataloader = DataLoader(dataset = self.dataset,
+                                batch_size = batch_size,
+                                num_workers = 4)
+        loop_num = self.warm_up + self.infer_epoch
+        time_sum = 0
+        model.eval()
+        
+        for step, img in enumerate(img_dataloader):
+            img.to("cuda")
+            if step >= loop_num:
+                break
+            starter, ender = torch.cuda.Event(enable_timing = True), torch.cuda.Event(enable_timing = True)
+            starter.record()
+            model(img)
+            ender.record()
+            torch.cuda.synchronize()
+            if step >= self.warm_up:
+                now_durations = starter.elapsed_time(ender)
+                durations.append(now_durations)
+                time_sum += now_durations / 1000
+        
+        total_img_num = self.infer_epoch * batch_size
+        ops = (op_num * total_img_num / time_sum) * pow(10,-9)
+        opj = ops / self.hardware_info["GPU"]
+        
+        return durations, ops, opj
 
     def inference_tpu(self):
         return [], 0, 0
@@ -145,7 +191,7 @@ if __name__ == "__main__":
     infer_epoch = 5
     batch_size_list = [1, 2, 4]
     model_list = ["senet154", "se_resnext50_32x4d", "efficientnet_b3", "unet", "unetpp"]
-    hardware_info = {"CPU":15}
+    hardware_info = {"CPU":15, "GPU":75}
     dlh_bench = DLHBenchmark(warm_up, infer_epoch, batch_size_list,
                             model_list, hardware_info)
     dlh_bench.bench_opsj()

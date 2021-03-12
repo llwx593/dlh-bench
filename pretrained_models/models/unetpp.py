@@ -110,7 +110,7 @@ def load_pretrained_model(model, weight_path):
     state_dict = model_zoo.load_url(PretrainedURL, map_location=torch.device("cpu"))
     _ = model.load_state_dict(state_dict)
 
-def unetpp(num_classes = 1, channel_input = 3, pretrained = False, weight_path = None):
+def unetpp(channel_input = 3, num_classes = 1, pretrained = False, weight_path = None):
     model = NestedUNet(num_classes, channel_input)
     if pretrained:
         load_pretrained_model(model, weight_path)
