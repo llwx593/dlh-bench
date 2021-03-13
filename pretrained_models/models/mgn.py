@@ -1,11 +1,18 @@
 """
 mgn.py - Model and module class for MGN.
+reference: https://github.com/GNAYUOHZ/ReID-MGN
 """
 import copy
 import torch
 import torch.nn as nn
 from torchvision.models.resnet import resnet50, Bottleneck
+from torch.utils import model_zoo
+from thop import profile
+from ptflops import get_model_complexity_info
+import time
 
+PretrainedURL = r"C:\Users\10125\.cache\torch\hub\checkpoints\mgn_weight.pt"
+__all__ = ["mgn"]
 num_classes = 751  # change this depend on your dataset
 
 
@@ -128,3 +135,34 @@ class MGN(nn.Module):
         predict = torch.cat([fg_p1, fg_p2, fg_p3, f0_p2, f1_p2, f0_p3, f1_p3, f2_p3], dim=1)
 
         return predict, fg_p1, fg_p2, fg_p3, l_p1, l_p2, l_p3, l0_p2, l1_p2, l0_p3, l1_p3, l2_p3
+
+def load_pretrained_model(model, weight_path):
+    if weight_path != None:
+        _ = model.load_state_dict(weight_path)
+        return
+    state_dict = model_zoo.load_url(PretrainedURL, map_location=torch.device("cpu"))
+    _ = model.load_state_dict(state_dict)
+
+def mgn(pretrained = True, weight_path = None):
+    model = MGN()
+    if pretrained:
+        load_pretrained_model(model, weight_path)
+    return model
+
+if __name__ == "__main__":
+    model1 = mgn()
+    model1.eval()
+    image1 = torch.randn(1, 3, 384, 128)
+    start_time = time.time()
+    out = model1(image1)
+    end_time = time.time()
+    duration = (end_time - start_time) * 1000
+    print("the inference duration is ", duration)
+
+    input_data = torch.randn(1, 3, 384, 128)
+    macs, params = profile(model1, inputs=(input_data, ))
+    print("the macs is ", macs)
+
+    macs, params = get_model_complexity_info(model1, (3,384,128), as_strings=True, 
+                    print_per_layer_stat=False, verbose=True) 
+    print("the another macs is ", macs)

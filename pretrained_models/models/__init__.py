@@ -5,6 +5,10 @@ from .senet import se_resnext50_32x4d
 from .efficientnet import efficientnet_b3
 from .unet import unet
 from .unetpp import unetpp
+from .mgn import mgn
+from .osnet import osnet
+from .pcb import pcb
+from .strong_baseline import baseline
 from .utils import (
     GlobalParams,
     BlockArgs,

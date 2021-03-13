@@ -35,13 +35,12 @@ class InferenceDataset(Dataset):
 
 class DLHBenchmark():
     """can benchmark GOPS and GOPJ on different hardware by running different model"""
-    def __init__(self, warm_up, infer_epoch, batch_size_list, model_list, hardware_info, model_simple):
+    def __init__(self, warm_up, infer_epoch, batch_size_list, model_list, hardware_info):
         self.warm_up = warm_up
         self.infer_epoch = infer_epoch
         self.batch_size_list = batch_size_list
         self.model_list = model_list
         self.hardware_info = hardware_info
-        self.model_simple = model_simple
 
         max_batch_size = max(self.batch_size_list)
         data_num = max_batch_size * (self.warm_up + self.infer_epoch)
@@ -114,7 +113,7 @@ class DLHBenchmark():
         model.eval()
         
         for step, img in enumerate(img_dataloader):
-            img = img.to("cuda")
+            img.to("cuda")
             if step >= loop_num:
                 break
             starter, ender = torch.cuda.Event(enable_timing = True), torch.cuda.Event(enable_timing = True)
@@ -170,32 +169,31 @@ class DLHBenchmark():
                 benchmark_opj[hardware_type] = opj_record
 
             file_name = "results/final/final_ops_" + str(batch_size)
-            benchmark_ops_new = pandas.DataFrame(benchmark_ops, index = self.model_simple)
+            benchmark_ops_new = pandas.DataFrame(benchmark_ops, index = self.model_list)
             fig1_title = "GOP/S compare  " + "batch_size = " + str(batch_size)
-            ops_pt = benchmark_ops_new.plot(kind="bar", title=fig1_title, rot=45)
+            ops_pt = benchmark_ops_new.plot(kind="bar", title=fig1_title, rot=0)
             ops_fig = ops_pt.get_figure()
             fig1_name = "results/final/fig_ops_" + str(batch_size) + ".jpg"
             ops_fig.savefig(fig1_name)
             benchmark_ops_new.to_csv(file_name, index = True)
 
             file_name = "results/final/final_opj_" + str(batch_size)
-            benchmark_opj_new = pandas.DataFrame(benchmark_opj, index = self.model_simple)
+            benchmark_opj_new = pandas.DataFrame(benchmark_opj, index = self.model_list)
             fig2_title = "GOP/J compare  " + "batch_size = " + str(batch_size)
-            opj_pt = benchmark_opj_new.plot(kind="bar", title=fig2_title, rot=45)
+            opj_pt = benchmark_opj_new.plot(kind="bar", title=fig2_title, rot=0)
             opj_fig = opj_pt.get_figure()
             fig2_name = "results/final/fig_opj_" + str(batch_size) + ".jpg"
             opj_fig.savefig(fig2_name)
             benchmark_opj_new.to_csv(file_name, index = True)
 
 if __name__ == "__main__":
-    warm_up = 2
-    infer_epoch = 2
-    #batch_size_list = [1, 2, 4]
-    batch_size_list = [1]
-    model_list = ["senet154", "se_resnext50_32x4d", "efficientnet_b3", "unet", "unetpp"]
-    model_simple = ["se154", "se50", "eb3", "unet", "unet++"]
-    hardware_info = {"CPU":45, "GPU":75}
+    warm_up = 5
+    infer_epoch = 5
+    batch_size_list = [1, 2, 4]
+    model_list = ["senet154", "se_resnext50_32x4d", "efficientnet_b3", "unet", "unetpp",
+            "mgn", "osnet", "pcb", "baseline"]
+    hardware_info = {"CPU":15, "GPU":75}
     dlh_bench = DLHBenchmark(warm_up, infer_epoch, batch_size_list,
-                            model_list, hardware_info, model_simple)
+                            model_list, hardware_info)
     dlh_bench.bench_opsj()
     
