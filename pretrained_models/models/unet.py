@@ -8,7 +8,7 @@ import torch.nn.functional as F
 from torch.utils import model_zoo
 import time
 
-PretrainedURL = r"C:\Users\10125\.cache\torch\hub\checkpoints\unet_carvana_scale1_epoch5.pth"
+PretrainedURL = r"~\.cache\torch\hub\checkpoints\unet_carvana_scale1_epoch5.pth"
 __all__ = ["unet"]
 
 class DoubleConv(nn.Module):

@@ -13,7 +13,7 @@ from thop import profile
 from ptflops import get_model_complexity_info
 import time
 
-PretrainedURL = r"C:\Users\10125\.cache\torch\hub\checkpoints\osnet_x1_0_imagenet.pth"
+PretrainedURL = r"~\.cache\torch\hub\checkpoints\osnet_x1_0_imagenet.pth"
 __all__ = ["osnet"]
 
 ##########

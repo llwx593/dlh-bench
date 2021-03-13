@@ -11,7 +11,7 @@ from thop import profile
 from ptflops import get_model_complexity_info
 import time
 
-PretrainedURL = r"C:\Users\10125\.cache\torch\hub\checkpoints\mgn_weight.pt"
+PretrainedURL = r"~\.cache\torch\hub\checkpoints\mgn_weight.pt"
 __all__ = ["mgn"]
 num_classes = 751  # change this depend on your dataset
 
