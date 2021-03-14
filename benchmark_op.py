@@ -200,7 +200,7 @@ class DLHBenchmark():
                 file_name = "results/final/final_ops_" + str(batch_size)
                 benchmark_ops_new = pandas.DataFrame(benchmark_ops, index = self.model_simple)
                 fig1_title = "GOP/S compare  " + "batch_size = " + str(batch_size)
-                ops_pt = benchmark_ops_new.plot(kind="bar", title=fig1_title, rot=0)
+                ops_pt = benchmark_ops_new.plot(kind="bar", title=fig1_title, logy=True, rot=0)
                 ops_fig = ops_pt.get_figure()
                 fig1_name = "results/final/fig_ops_" + str(batch_size) + ".jpg"
                 ops_fig.savefig(fig1_name)
@@ -209,7 +209,7 @@ class DLHBenchmark():
                 file_name = "results/final/final_opj_" + str(batch_size)
                 benchmark_opj_new = pandas.DataFrame(benchmark_opj, index = self.model_simple)
                 fig2_title = "GOP/J compare  " + "batch_size = " + str(batch_size)
-                opj_pt = benchmark_opj_new.plot(kind="bar", title=fig2_title, rot=0)
+                opj_pt = benchmark_opj_new.plot(kind="bar", title=fig2_title, logy=True, rot=0)
                 opj_fig = opj_pt.get_figure()
                 fig2_name = "results/final/fig_opj_" + str(batch_size) + ".jpg"
                 opj_fig.savefig(fig2_name)
