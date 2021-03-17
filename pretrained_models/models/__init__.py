@@ -10,6 +10,7 @@ from .osnet import osnet
 from .pcb import pcb
 from .strong_baseline import baseline
 from .alphapose import alphapose
+from .st_gcn import st_gcn_net
 from .utils import (
     GlobalParams,
     BlockArgs,

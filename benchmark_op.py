@@ -49,6 +49,7 @@ class DLHBenchmark():
         self.dataset_reid = InferenceDataset(data_num, 384, 128)
         self.dataset_osnet = InferenceDataset(data_num, 256, 128)
         self.dataset_pose = InferenceDataset(data_num, 256, 192)
+        self.dataset_stgcn = InferenceDataset(data_num, 256, 14)
 
     def inference_cpu(self, model_name, batch_size):
         durations = []
@@ -63,6 +64,8 @@ class DLHBenchmark():
             input_res = (3, 384, 128)
         elif model_name == "alphapose":
             input_res = (3, 256, 192)
+        elif model_name == "st_gcn_net":
+            input_res = (3, 256, 14)
         macs, params = get_model_complexity_info(model, input_res, as_strings=True, 
                                         print_per_layer_stat=False, verbose=True)                                                
         float_macs = transStr2Float(macs)
@@ -81,6 +84,8 @@ class DLHBenchmark():
             img_dataset = self.dataset_reid
         elif model_name == "alphapose":
             img_dataset = self.dataset_pose
+        elif model_name == "st_gcn_net":
+            img_dataset = self.dataset_stgcn
 
         img_dataloader = DataLoader(dataset = img_dataset,
                                 batch_size = batch_size,
@@ -124,6 +129,8 @@ class DLHBenchmark():
             input_res = (3, 384, 128)
         elif model_name == "alphapose":
             input_res = (3, 256, 192)
+        elif model_name == "st_gcn_net":
+            input_res = (3, 256, 14)
         macs, params = get_model_complexity_info(model, input_res, as_strings=True, 
                                         print_per_layer_stat=False, verbose=True)                                                
         float_macs = transStr2Float(macs)
@@ -142,6 +149,8 @@ class DLHBenchmark():
             img_dataset = self.dataset_reid
         elif model_name == "alphapose":
             img_dataset = self.dataset_pose
+        elif model_name == "st_gcn_net":
+            img_dataset = self.dataset_stgcn
         img_dataloader = DataLoader(dataset = img_dataset,
                                 batch_size = batch_size,
                                 num_workers = 4)
@@ -232,8 +241,8 @@ if __name__ == "__main__":
     infer_epoch = 2
     batch_size_list = [1]
     model_list = ["senet154", "se_resnext50_32x4d", "efficientnet_b3", "unet", "unetpp",
-            "mgn", "osnet", "pcb", "baseline", "alphapose"]
-    model_simple = ["se154", "se50", "eb3", "unet", "unet++", "mgn", "osnet", "pcb", "bline", "apose"]
+            "mgn", "osnet", "pcb", "baseline", "alphapose", "st_gcn_net"]
+    model_simple = ["se154", "se50", "eb3", "unet", "unet++", "mgn", "osnet", "pcb", "bline", "apose", "stgcn"]
     #hardware_info = {"CPU":45, "GPU":75}
     hardware_info = {"CPU":15}
     dlh_bench = DLHBenchmark(warm_up, infer_epoch, batch_size_list,
