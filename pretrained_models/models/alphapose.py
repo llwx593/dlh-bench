@@ -8,7 +8,11 @@ import torch.nn.functional as F
 import yaml
 from easydict import EasyDict as edict
 import time
+import os
+from thop import profile
+from ptflops import get_model_complexity_info
 
+PretrainedURL = r"C:\Users\10125\.cache\torch\hub\checkpoints\fast_res50_256x192.pth"
 __all__ = ["alphapose"]
 
 class DUC(nn.Module):
@@ -313,15 +317,17 @@ class FastPose(nn.Module):
                 nn.init.normal_(m.weight, std=0.001)
                 nn.init.constant_(m.bias, 0)
 
-def get_cfg(file_path=None):
-    ori_path = r"config/net.yaml"
-    if file_path != None:
-        ori_path = file_path
-    with open(ori_path) as f:
+def get_cfg(new_path=None):
+    base_path = r"pretrained_models\models\config\net.yaml"
+    if new_path != None:
+        base_path = new_path
+    root_path = os.getcwd()
+    file_path = os.path.join(root_path, base_path)
+    with open(file_path) as f:
         config = edict(yaml.load(f, Loader=yaml.FullLoader))
         return config
 
-def alphapose(cfg_file=None, pretrained=None, checkpoint_path="", device_cfg="cpu"):
+def alphapose(cfg_file=None, pretrained=True, device_cfg="cpu"):
     cfg = get_cfg(cfg_file)
     model_cfg = cfg.MODEL
     preset_cfg = {
@@ -335,7 +341,7 @@ def alphapose(cfg_file=None, pretrained=None, checkpoint_path="", device_cfg="cp
     
     pose_model = FastPose(**all_cfg)
     if pretrained:
-        pose_model.load_state_dict(torch.load(checkpoint_path, map_location=device_cfg))
+        pose_model.load_state_dict(torch.load(PretrainedURL, map_location=torch.device(device_cfg)))
     return pose_model
 
 if __name__ == "__main__":
@@ -347,4 +353,8 @@ if __name__ == "__main__":
     end_time = time.time()
     duration = (end_time - start_time) * 1000
     print("duration is ", duration)
+    macs, _ = profile(model, inputs=(img, ))
+    print("thop ans is ", macs)
+    macs, _ = get_model_complexity_info(model, (3,256,192), print_per_layer_stat=False)
+    print("ptflop ans is ", macs)
     

@@ -9,6 +9,7 @@ from .mgn import mgn
 from .osnet import osnet
 from .pcb import pcb
 from .strong_baseline import baseline
+from .alphapose import alphapose
 from .utils import (
     GlobalParams,
     BlockArgs,

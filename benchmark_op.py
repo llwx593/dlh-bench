@@ -48,6 +48,7 @@ class DLHBenchmark():
         self.dataset = InferenceDataset(data_num, 224, 224)
         self.dataset_reid = InferenceDataset(data_num, 384, 128)
         self.dataset_osnet = InferenceDataset(data_num, 256, 128)
+        self.dataset_pose = InferenceDataset(data_num, 256, 192)
 
     def inference_cpu(self, model_name, batch_size):
         durations = []
@@ -60,6 +61,8 @@ class DLHBenchmark():
             input_res = (3, 256, 128)
         elif model_name == "mgn" or model_name == "pcb" or model_name == "baseline":
             input_res = (3, 384, 128)
+        elif model_name == "alphapose":
+            input_res = (3, 256, 192)
         macs, params = get_model_complexity_info(model, input_res, as_strings=True, 
                                         print_per_layer_stat=False, verbose=True)                                                
         float_macs = transStr2Float(macs)
@@ -76,6 +79,8 @@ class DLHBenchmark():
             img_dataset = self.dataset_osnet
         elif model_name == "mgn" or model_name == "pcb" or model_name == "baseline":
             img_dataset = self.dataset_reid
+        elif model_name == "alphapose":
+            img_dataset = self.dataset_pose
 
         img_dataloader = DataLoader(dataset = img_dataset,
                                 batch_size = batch_size,
@@ -117,6 +122,8 @@ class DLHBenchmark():
             input_res = (3, 256, 128)
         elif model_name == "mgn" or model_name == "pcb" or model_name == "baseline":
             input_res = (3, 384, 128)
+        elif model_name == "alphapose":
+            input_res = (3, 256, 192)
         macs, params = get_model_complexity_info(model, input_res, as_strings=True, 
                                         print_per_layer_stat=False, verbose=True)                                                
         float_macs = transStr2Float(macs)
@@ -133,6 +140,8 @@ class DLHBenchmark():
             img_dataset = self.dataset_osnet
         elif model_name == "mgn" or model_name == "pcb" or model_name == "baseline":
             img_dataset = self.dataset_reid
+        elif model_name == "alphapose":
+            img_dataset = self.dataset_pose
         img_dataloader = DataLoader(dataset = img_dataset,
                                 batch_size = batch_size,
                                 num_workers = 4)
@@ -216,13 +225,17 @@ class DLHBenchmark():
                 benchmark_opj_new.to_csv(file_name, index = True)
 
 if __name__ == "__main__":
-    warm_up = 5
-    infer_epoch = 5
-    batch_size_list = [1, 2, 4]
+    # warm_up = 5
+    # infer_epoch = 5
+    # batch_size_list = [1, 2, 4]
+    warm_up = 2
+    infer_epoch = 2
+    batch_size_list = [1]
     model_list = ["senet154", "se_resnext50_32x4d", "efficientnet_b3", "unet", "unetpp",
-            "mgn", "osnet", "pcb", "baseline"]
-    model_simple = ["se154", "se50", "eb3", "unet", "unet++", "mgn", "osnet", "pcb", "bline"]
-    hardware_info = {"CPU":45, "GPU":75}
+            "mgn", "osnet", "pcb", "baseline", "alphapose"]
+    model_simple = ["se154", "se50", "eb3", "unet", "unet++", "mgn", "osnet", "pcb", "bline", "apose"]
+    #hardware_info = {"CPU":45, "GPU":75}
+    hardware_info = {"CPU":15}
     dlh_bench = DLHBenchmark(warm_up, infer_epoch, batch_size_list,
                             model_list, model_simple, hardware_info)
     dlh_bench.bench_opsj()
