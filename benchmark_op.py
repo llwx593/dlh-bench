@@ -234,12 +234,12 @@ class DLHBenchmark():
                 benchmark_opj_new.to_csv(file_name, index = True)
 
 if __name__ == "__main__":
-    # warm_up = 5
-    # infer_epoch = 5
-    # batch_size_list = [1, 2, 4]
-    warm_up = 2
-    infer_epoch = 2
-    batch_size_list = [1]
+    warm_up = 5
+    infer_epoch = 5
+    batch_size_list = [1, 2, 4]
+    # warm_up = 2
+    # infer_epoch = 2
+    # batch_size_list = [1]
     model_list = ["senet154", "se_resnext50_32x4d", "efficientnet_b3", "unet", "unetpp",
             "mgn", "osnet", "pcb", "baseline", "alphapose", "st_gcn_net", "deeppose"]
     model_simple = ["se154", "se50", "eb3", "unet", "unet++", "mgn", "osnet", "pcb", "bline", "apose", "stgcn", "dpose"]
