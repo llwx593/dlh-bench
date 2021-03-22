@@ -12,7 +12,7 @@ import os
 from thop import profile
 from ptflops import get_model_complexity_info
 
-PretrainedURL = r"C:\Users\10125\.cache\torch\hub\checkpoints\fast_res50_256x192.pth"
+PretrainedURL = r"C:\Users\asus\.cache\torch\hub\checkpoints\fast_res50_256x192.pth"
 __all__ = ["alphapose"]
 
 class DUC(nn.Module):

@@ -243,8 +243,8 @@ if __name__ == "__main__":
     model_list = ["senet154", "se_resnext50_32x4d", "efficientnet_b3", "unet", "unetpp",
             "mgn", "osnet", "pcb", "baseline", "alphapose", "st_gcn_net", "deeppose"]
     model_simple = ["se154", "se50", "eb3", "unet", "unet++", "mgn", "osnet", "pcb", "bline", "apose", "stgcn", "dpose"]
-    #hardware_info = {"CPU":45, "GPU":75}
-    hardware_info = {"CPU":15}
+    hardware_info = {"CPU":45, "GPU":75}
+    #hardware_info = {"CPU":15}
     dlh_bench = DLHBenchmark(warm_up, infer_epoch, batch_size_list,
                             model_list, model_simple, hardware_info)
     dlh_bench.bench_opsj()
