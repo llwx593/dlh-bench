@@ -327,7 +327,7 @@ def get_cfg(new_path=None):
         config = edict(yaml.load(f, Loader=yaml.FullLoader))
         return config
 
-def alphapose(cfg_file=None, pretrained=True, device_cfg="cpu"):
+def alphapose(cfg_file=None, pretrained=False, device_cfg="cpu"):
     cfg = get_cfg(cfg_file)
     model_cfg = cfg.MODEL
     preset_cfg = {

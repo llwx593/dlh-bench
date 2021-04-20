@@ -452,7 +452,7 @@ def load_pretrained_model(model, weight_path):
     state_dict = model_zoo.load_url(PretrainedURL, map_location=torch.device("cpu"))
     _ = model.load_state_dict(state_dict)
 
-def osnet(pretrained = True, weight_path = None):
+def osnet(pretrained = False, weight_path = None):
     model = osnet_x1_0()
     if pretrained:
         load_pretrained_model(model, weight_path)

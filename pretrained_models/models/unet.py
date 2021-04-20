@@ -123,7 +123,7 @@ def load_pretrained_model(model, weight_path):
     state_dict = model_zoo.load_url(PretrainedURL, map_location=torch.device("cpu"))
     _ = model.load_state_dict(state_dict)
 
-def unet(channel_input = 3, num_classes = 1, pretrained = True, weight_path = None):
+def unet(channel_input = 3, num_classes = 1, pretrained = False, weight_path = None):
     model = UNet(channel_input, num_classes)
     if pretrained:
         load_pretrained_model(model, weight_path)
