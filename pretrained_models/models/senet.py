@@ -302,7 +302,7 @@ def initialize_pretrained_model(model, num_classes, settings):
     model.mean = settings['mean']
     model.std = settings['std']
 
-def senet154(num_classes=1000, pretrained = "imagenet"):
+def senet154(num_classes=1000, pretrained = None):
     model = SENet(SEBottleneck, [3, 8, 36, 3], groups=64, reduction=16,
                   dropout_p=0.2, num_classes=num_classes)
     if pretrained is not None:
@@ -310,7 +310,7 @@ def senet154(num_classes=1000, pretrained = "imagenet"):
         initialize_pretrained_model(model, num_classes, settings)
     return model
 
-def se_resnext50_32x4d(num_classes=1000, pretrained='imagenet'):
+def se_resnext50_32x4d(num_classes=1000, pretrained=None):
     model = SENet(SEResNeXtBottleneck, [3, 4, 6, 3], groups=32, reduction=16,
                   dropout_p=None, inplanes=64, input_3x3=False,
                   downsample_kernel_size=1, downsample_padding=0,
