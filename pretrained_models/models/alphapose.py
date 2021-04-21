@@ -318,7 +318,7 @@ class FastPose(nn.Module):
                 nn.init.constant_(m.bias, 0)
 
 def get_cfg(new_path=None):
-    base_path = r"pretrained_models\models\config\net.yaml"
+    base_path = r"pretrained_models/models/config/net.yaml"
     if new_path != None:
         base_path = new_path
     root_path = os.getcwd()

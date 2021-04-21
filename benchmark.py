@@ -15,6 +15,9 @@ from ptflops import get_model_complexity_info
 
 torch.backends.cudnn.benchmark = True
 
+op_dir = {"senet154": 41.64, "se_resnext50_32x4d": 8.56, "efficientnet_b3": 1.8, "unet": 61.42, "unetpp": 53.06, "mgn": 23.88, "osnet": 
+0.98, "pcb": 8.08, "baseline": 8.08, "alphapose": 11.82, "st_gcn_net": 7.8, "deeppose": 8.24}
+
 def transStr2Float(input_str):
     for c in range(len(input_str)):
         if input_str[c] == 'G':
@@ -51,34 +54,13 @@ class DLHBenchmark():
         self.dataset_pose = InferenceDataset(data_num, 256, 192)
         self.dataset_stgcn = InferenceDataset(data_num, 256, 14)
 
-    def inference_cpu(self, model_name, batch_size):
+    def inference_cpu(self, model_name, batch_size, bench_flag="op"):
         durations = []
         ops = 0
         opj = 0
 
         model = pm.__dict__[model_name]()
-
-        # 获得输入图片的size
-        input_res = (3, 224, 224)
-        if model_name == "osnet":
-            input_res = (3, 256, 128)
-        elif model_name == "mgn" or model_name == "pcb" or model_name == "baseline":
-            input_res = (3, 384, 128)
-        elif model_name == "alphapose":
-            input_res = (3, 256, 192)
-        elif model_name == "st_gcn_net":
-            input_res = (3, 256, 14)
-
-        # 获得模型的op
-        macs, _ = get_model_complexity_info(model, input_res, as_strings=True, 
-                                        print_per_layer_stat=False, verbose=True)                                                
-        float_macs = transStr2Float(macs)
-        op_num = float_macs * pow(10, 9) * 2
-        # 先使用paper给的值
-        if model_name == "efficientnet_b3":
-            op_num = 1.8 * pow(10, 9)
-        elif model_name == "osnet":
-            op_num = 0.98 * pow(10,9)
+        op_num = op_dir[model_name]
 
         # 获得数据集        
         img_dataset = self.dataset
@@ -109,12 +91,18 @@ class DLHBenchmark():
                 time_sum += now_durations / 1000
         
         total_img_num = self.infer_epoch * batch_size
-        ops = (op_num * total_img_num / time_sum) * pow(10,-9)
+        ops = (op_num * total_img_num / time_sum)
         opj = ops / self.hardware_info["cpu"]
 
-        return durations, ops, opj
+        sample_s = total_img_num / time_sum
+        sample_j = sample_s / self.hardware_info["cpu"]
 
-    def inference_gpu(self, model_name, batch_size):
+        if bench_flag == "op":
+            return durations, ops, opj
+        elif bench_flag == "sample":
+            return sample_s, sample_j
+
+    def inference_gpu(self, model_name, batch_size, bench_flag="op"):
         if not torch.cuda.is_available():
             print("error!!! you don't have cuda")
             return [], 0, 0
@@ -125,27 +113,7 @@ class DLHBenchmark():
 
         model = pm.__dict__[model_name]()
         model = model.to("cuda")
-
-        # 获得输入图片的size
-        input_res = (3, 224, 224)
-        if model_name == "osnet":
-            input_res = (3, 256, 128)
-        elif model_name == "mgn" or model_name == "pcb" or model_name == "baseline":
-            input_res = (3, 384, 128)
-        elif model_name == "alphapose":
-            input_res = (3, 256, 192)
-        elif model_name == "st_gcn_net":
-            input_res = (3, 256, 14)
-
-        macs, _ = get_model_complexity_info(model, input_res, as_strings=True, 
-                                        print_per_layer_stat=False, verbose=True)                                                
-        float_macs = transStr2Float(macs)
-        op_num = float_macs * pow(10, 9) * 2
-        # 先使用paper给的值
-        if model_name == "efficientnet_b3":
-            op_num = 1.8 * pow(10, 9)
-        elif model_name == "osnet":
-            op_num = 0.98 * pow(10,9)
+        op_num = op_dir[model_name]
 
         # 获得dataset
         img_dataset = self.dataset
@@ -179,15 +147,21 @@ class DLHBenchmark():
                 time_sum += now_durations / 1000
         
         total_img_num = self.infer_epoch * batch_size
-        ops = (op_num * total_img_num / time_sum) * pow(10,-9)
+        ops = (op_num * total_img_num / time_sum)
         opj = ops / self.hardware_info["gpu"]
         
-        return durations, ops, opj
+        sample_s = total_img_num / time_sum
+        sample_j = sample_s / self.hardware_info["gpu"]
+
+        if bench_flag == "op":
+            return durations, ops, opj
+        elif bench_flag == "sample":
+            return sample_s, sample_j
 
     def inference_tpu(self):
         return [], 0, 0
 
-    def inference_npu(self, model_name, batch_size):
+    def inference_npu(self, model_name, batch_size, bench_flag="op"):
         if not torch.npu.is_available():
             print("error!!! you don't have npu")
             return [], 0, 0
@@ -198,28 +172,7 @@ class DLHBenchmark():
 
         model = pm.__dict__[model_name]()
         model = model.to("npu:0")
-
-        # 获得输入图片的size
-        input_res = (3, 224, 224)
-        if model_name == "osnet":
-            input_res = (3, 256, 128)
-        elif model_name == "mgn" or model_name == "pcb" or model_name == "baseline":
-            input_res = (3, 384, 128)
-        elif model_name == "alphapose":
-            input_res = (3, 256, 192)
-        elif model_name == "st_gcn_net":
-            input_res = (3, 256, 14)
-
-        # 获得模型的op数据
-        macs, _ = get_model_complexity_info(model, input_res, as_strings=True, 
-                                        print_per_layer_stat=False, verbose=True)                                                
-        float_macs = transStr2Float(macs)
-        op_num = float_macs * pow(10, 9) * 2
-        # 先使用paper给的值
-        if model_name == "efficientnet_b3":
-            op_num = 1.8 * pow(10, 9)
-        elif model_name == "osnet":
-            op_num = 0.98 * pow(10,9)
+        op_num = op_dir[model_name]
 
         # 获得dataset
         img_dataset = self.dataset
@@ -253,10 +206,16 @@ class DLHBenchmark():
                 time_sum += now_durations / 1000
         
         total_img_num = self.infer_epoch * batch_size
-        ops = (op_num * total_img_num / time_sum) * pow(10,-9)
+        ops = (op_num * total_img_num / time_sum)
         opj = ops / self.hardware_info["npu"]
-        
-        return durations, ops, opj
+
+        sample_s = total_img_num / time_sum
+        sample_j = sample_s / self.hardware_info["npu"]
+
+        if bench_flag == "op":
+            return durations, ops, opj
+        elif bench_flag == "sample":
+            return sample_s, sample_j
 
     def make_hardware_func(self):
         func_map = {'cpu':self.inference_cpu, 'gpu':self.inference_gpu, 'tpu':self.inference_tpu,
@@ -268,6 +227,8 @@ class DLHBenchmark():
         for i in range(len(self.batch_size_list)):
             ops_df_list = []
             opj_df_list = []
+            samples_df_list = []
+            samplej_df_list = []
             for j in range(len(result_list)):
                 file_name_ops = "results/bench/ops_" + str(self.batch_size_list[i]) + "_" + str(result_list[j])
                 csvdata = pandas.read_csv(file_name_ops, index_col=0)
@@ -280,6 +241,18 @@ class DLHBenchmark():
                 df = pandas.DataFrame(csvdata)
                 df_new = df.rename(index = self.model_simple)
                 opj_df_list.append(df_new)
+
+                file_name_samples = "results/bench/samples_" + str(self.batch_size_list[i]) + "_" + str(result_list[j])
+                csvdata = pandas.read_csv(file_name_samples, index_col=0)
+                df = pandas.DataFrame(csvdata)
+                df_new = df.rename(index = self.model_simple)
+                samples_df_list.append(df_new)
+
+                file_name_samplej = "results/bench/samples_" + str(self.batch_size_list[i]) + "_" + str(result_list[j])
+                csvdata = pandas.read_csv(file_name_samplej, index_col=0)
+                df = pandas.DataFrame(csvdata)
+                df_new = df.rename(index = self.model_simple)
+                samplej_df_list.append(df_new)
 
             ops_final_df = pandas.concat(ops_df_list, axis=1)
             ops_final_name = "results/bench/final_ops_" + str(self.batch_size_list[i])
@@ -298,6 +271,24 @@ class DLHBenchmark():
             opj_fig = opj_pt.get_figure()
             fig2_name = "results/bench/fig_opj_" + str(self.batch_size_list[i]) + ".jpg"
             opj_fig.savefig(fig2_name)
+
+            samples_final_df = pandas.concat(samples_df_list, axis=1)
+            samples_final_name = "results/bench/final_samples_" + str(self.batch_size_list[i])
+            samples_final_df.to_csv(samples_final_name, index=True)
+            fig3_title = "SAMPLE/S compare  " + "batch_size = " + str(self.batch_size_list[i])
+            samples_pt = samples_final_df.plot(kind="bar", title=fig3_title, logy=True, rot=0)
+            samples_fig = samples_pt.get_figure()
+            fig3_name = "results/bench/fig_samples_" + str(self.batch_size_list[i]) + ".jpg"
+            samples_fig.savefig(fig3_name)
+
+            samplej_final_df = pandas.concat(samplej_df_list, axis=1)
+            samplej_final_name = "results/bench/final_samplej_" + str(self.batch_size_list[i])
+            samplej_final_df.to_csv(samplej_final_name, index=True)
+            fig4_title = "SAMPLE/J compare  " + "batch_size = " + str(self.batch_size_list[i])
+            samplej_pt = samplej_final_df.plot(kind="bar", title=fig4_title, logy=True, rot=0)
+            samplej_fig = samplej_pt.get_figure()
+            fig4_name = "results/bench/fig_samplej_" + str(self.batch_size_list[i]) + ".jpg"
+            samplej_fig.savefig(fig4_name)
 
         return
 
@@ -344,7 +335,39 @@ class DLHBenchmark():
                 benchmark_opj_new.to_csv(file_name_opj)
         
         return
+
+    def bench_sample(self):
+        func_map = self.make_hardware_func()
+
+        with torch.no_grad():
+            for batch_size in self.batch_size_list:
+                benchmark_sample_s = {}
+                benchmark_sample_j = {}
+
+                for hardware_type in self.hardware_info.keys():
+                    sample_s_record = []
+                    sample_j_record = []
+
+                    for model_name in self.model_list:
+                        sample_s, sample_j= func_map[hardware_type](model_name, batch_size, "sample")
+                        sample_s_record.append(sample_s)
+                        sample_j_record.append(sample_j)
+
+                    benchmark_sample_s[hardware_type] = sample_s_record
+                    benchmark_sample_j[hardware_type] = sample_j_record
                 
+                hprefix = self.get_prefix()
+
+                file_name_samples = "results/bench/samples_" + str(batch_size) + "_" + hprefix
+                benchmark_ops_new = pandas.DataFrame(benchmark_sample_s)
+                benchmark_ops_new.to_csv(file_name_samples)                   
+
+                file_name_samplej = "results/bench/samplej_" + str(batch_size) + "_" + hprefix
+                benchmark_opj_new = pandas.DataFrame(benchmark_sample_j)
+                benchmark_opj_new.to_csv(file_name_samplej)
+        
+        return
+
 
 if __name__ == "__main__":
     # warm_up = 5
