@@ -19,3 +19,5 @@ from .utils import (
     efficientnet,
     get_model_params,
 )
+from .matmul import matmul256, matmul1024, matmul4096
+from .convop import cnsmall, cnmid, cnbig

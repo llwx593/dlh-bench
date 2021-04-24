@@ -22,3 +22,5 @@ from .models.utils import (
     efficientnet,
     get_model_params,
 )
+from .models.matmul import matmul256, matmul1024, matmul4096
+from .models.convop import cnsmall, cnmid, cnbig

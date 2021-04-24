@@ -2,9 +2,11 @@ import pretrained_models as pm
 from ptflops import get_model_complexity_info
 
 
-model_list = ["senet154", "se_resnext50_32x4d", "efficientnet_b3", "unet", "unetpp",
-        "mgn", "osnet", "pcb", "baseline", "alphapose", "st_gcn_net", "deeppose"]
+# model_list = ["senet154", "se_resnext50_32x4d", "efficientnet_b3", "unet", "unetpp",
+#         "mgn", "osnet", "pcb", "baseline", "alphapose", "st_gcn_net", "deeppose"]
 
+
+model_list = ["matmul256", "matmul1024", "matmul4096", "cnsmall", "cnmid", "cnbig"]
 
 def transStr2Float(input_str):
     for c in range(len(input_str)):
@@ -26,6 +28,12 @@ for i in range(len(model_list)):
         input_res = (3, 256, 192)
     elif model_name == "st_gcn_net":
         input_res = (3, 256, 14)
+    elif model_name == "matmul256":
+        input_res = (1, 256, 256)
+    elif model_name == "matmul1024":
+        input_res = (1, 1024, 1024)
+    elif model_name == "matmul4096":
+        input_res = (1, 4096, 4096)
 
     # 获得模型的op
     macs, _ = get_model_complexity_info(model, input_res, as_strings=True, 
