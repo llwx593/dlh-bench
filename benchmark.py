@@ -590,6 +590,8 @@ if __name__ == "__main__":
     dlh_bench = DLHBenchmark(warm_up, infer_epoch, batch_size_list,
                             model_list, model_simple, hardware_info)
     dlh_bench.bench_opsj()
+
+    """
     dlh_bench.bench_sample()
 
     warm_up = 5
@@ -607,6 +609,7 @@ if __name__ == "__main__":
                             model_list, model_simple, hardware_info)
     dlh_bench.bench_opsj()
     dlh_bench.bench_sample()
+    """
 
     """
     画图功能
