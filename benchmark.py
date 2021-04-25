@@ -114,7 +114,7 @@ class DLHBenchmark():
         opj = 0
 
         model = pm.__dict__[model_name]()
-        model = model.to("cuda")
+        model = model.to("cuda:1")
         op_num = op_dir[model_name]
 
         # 获得dataset
@@ -135,7 +135,7 @@ class DLHBenchmark():
         time_sum = 0
         model.eval()        
         for step, img in enumerate(img_dataloader):
-            img = img.to("cuda")
+            img = img.to("cuda:1")
             if step >= loop_num:
                 break
             starter, ender = torch.cuda.Event(enable_timing = True), torch.cuda.Event(enable_timing = True)
