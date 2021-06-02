@@ -18,6 +18,7 @@ power_num = 250
 
 ops_list = {}
 opj_list = {}
+
 for i in range(len(model_list)):
     model_name = model_list[i]
     img = torch.randn(batch_size, 3, 224, 224)
@@ -63,7 +64,7 @@ print(opj_list)
 
 # model = pm.__dict__["unet"]()
 # #model = model.to("npu:0")
-# img = torch.randn(1, 3, 224, 224)
+# img = torch.randn(1, 3, 224, 224) 
 # #img = img.to("npu:0")
 
 # with torch.no_grad():

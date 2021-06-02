@@ -1,2 +1,2 @@
-{"senet154": 41.64, "se_resnext50_32x4d": 4.25, "efficientnet_b3": 1.8, "unet": 61.42, "unetpp": 53.06, "mgn": 23.88, "osnet": 
-    0.98, "pcb": 8.08, "baseline": 8.08, "alphapose": 11.82, "st_gcn_net": 7.8, "deeppose": 8.24}
+{"senet154": 41.49, "se_resnext50_32x4d": 8.52, "efficientnet_b3": 3.856, "unet": 61.42, "unetpp": 53.06, "mgn": 23.88, "osnet": 
+    0.98, "pcb": 8.08, "baseline": 8.08, "alphapose": 19.1, "st_gcn_net": 7.8, "deeppose": 8.24}
